@@ -150,8 +150,6 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             String mts = metadata.toString();
             String hts = handler.toString();
 
-            System.out.println(hts);
-
             assertTrue(mts.contains(fileName));
             assertTrue(hts.contains("\\DEVICE\\HARDDISKVOLUME2"));
             assertTrue(hts.contains("Mar 25, 2015 11:08:36"));
