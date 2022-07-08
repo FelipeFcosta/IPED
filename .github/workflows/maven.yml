@@ -35,7 +35,7 @@ jobs:
           cd libagdb/ && sudo make install
           sudo ldconfig
           cd ..
-          sudo apt-get install libscca-utils rifiuti2 libevtx-utils libevt1
+          sudo apt-get install libscca-utils rifiuti2 libevtx-utils libevt-utils
 
     - name: Build with Maven
       run: mvn test -Dtest=ExternalParserTest -DfailIfNoTests=false
