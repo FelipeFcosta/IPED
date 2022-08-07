@@ -15,7 +15,8 @@ jobs:
       with:
         java-version: 11
         java-package: jdk+fx
-    - name: Load from cache
+
+    - name: Cache libagdb
       id: libagdb
       uses: actions/cache@v1
       with:
@@ -27,18 +28,46 @@ jobs:
       if: steps.libagdb.outputs.cache-hit != 'true'
       run: | 
             sudo apt install git autoconf automake autopoint libtool pkg-config
-            git clone https://github.com/libyal/libagdb.git
-            cd libagdb/ && sudo ./synclibs.sh && sudo ./autogen.sh
-            sudo ./configure
-    - name: Install external parsers tools
+            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout e858e15
+            sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
+
+    - name: Cache imagemagick
+      id: imagemagick
+      uses: actions/cache@v1
+      with:
+        path: ImageMagick-7.1.0
+        key: imagemagick
+
+    - name: Compile imagemagick
+      if: steps.imagemagick.outputs.cache-hit != 'true'
+      run: | 
+            git clone https://github.com/ImageMagick/ImageMagick.git ImageMagick-7.1.0
+            cd ImageMagick-7.1.0/
+            sudo ./configure && sudo make
+
+
+    - name: Install External Tools
       run: |
           cd libagdb/ && sudo make install
-          sudo ldconfig
+          sudo ldconfig /usr/local/lib
           cd ..
-          sudo apt-get install libscca-utils rifiuti2 libevtx-utils libevt-utils
+          cd ImageMagick-7.1.0/ && sudo make install
+          sudo ldconfig /usr/local/lib
+          
+          sudo apt-get update && sudo apt install \
+          libscca-utils rifiuti2 libevtx-utils libevt-utils \
+          libmsiecf-utils=20181227-1.1 \
+          pff-tools=20180714-2 \
+          libesedb-utils=20181229-3.1 \
+          tesseract-ocr=4.1.1-2build2 \
+          tesseract-ocr-por=1:4.00~git30-7274cfa-1 \
+          python3-pip
+          sudo perl -MCPAN -e 'install Parse::Win32Registry'
+          pip install jep==4.0.3
+
 
     - name: Build with Maven
-      run: mvn test -Dtest=ExternalParserTest -DfailIfNoTests=false
+      run: mvn -B package --file pom.xml
     - shell: bash
       run:
         cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
@@ -69,7 +98,28 @@ jobs:
             libesedb-utils=20181229-3.1 \
             tesseract-ocr=4.1.1-2build2 \
             tesseract-ocr-por=1:4.00~git30-7274cfa-1 \
-            imagemagick=8:6.9.10.23+dfsg-2.1ubuntu11.4 gsfonts
+            python3-pip
             sudo perl -MCPAN -e 'install Parse::Win32Registry'
+            pip install jep==4.0.3
+
+    - name: Load libagdb from cache
+      id: libagdb
+      uses: actions/cache@v1
+      with:
+        path: libagdb
+        key: libagdb
+    - name: Compile libagdb
+      # libagdb (agdbinfo) needs to be built from source
+      if: steps.libagdb.outputs.cache-hit != 'true'
+      run: | 
+            sudo apt install git autoconf automake autopoint libtool pkg-config
+            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout e858e15
+            sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
+    - name: Install external parsers tools
+      run: |
+          cd libagdb/ && sudo make install
+          sudo ldconfig
+          cd ..
+          sudo apt-get install libscca-utils rifiuti2 libevtx-utils libevt-utils
     - name: Build with Maven
       run: mvn -B package --file pom.xml

@@ -53,7 +53,7 @@ public class OCRParserTest {
             OCRParser.checkVersionInfo(tesseractPath, "-v");
             System.setProperty(OCRParser.ENABLE_PROP, "true");
         } catch (IOException | InterruptedException e) {
-            LOGGER.error("Error testing tesseract");
+            LOGGER.error("Skipping tesseract tests...");
         }
     }
 
@@ -83,10 +83,8 @@ public class OCRParserTest {
             assumeTrue(parser.isEnabled());
 
             parser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains("Content-Type=image/png"));
             assertTrue(hts.contains("57%"));
             assertTrue(hts.contains("10:04 am"));
             assertTrue(hts.contains("Oi, tudo bem?"));
@@ -113,10 +111,8 @@ public class OCRParserTest {
             assumeTrue(parser.isEnabled());
             
             parser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains("Content-Type=application/pdf"));
             assertTrue(hts.contains("RISC-V UNICICLO"));
             assertTrue(hts.contains("Instruction [31-0]"));
             assertTrue(hts.contains("MemtoReg"));
@@ -157,10 +153,8 @@ public class OCRParserTest {
             assumeTrue(parser.isEnabled());
 
             parser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains("Content-Type=image/tiff"));
             assertTrue(hts.contains("Literature must rest always on a principle"));
             assertTrue(hts.contains("times and places are one; the stuff he deals with"));
             assertTrue(hts.contains("extract from THE ENGLISH RENAISSANCE"));
@@ -202,10 +196,9 @@ public class OCRParserTest {
             assumeTrue(isImageMagickInstalled(magickDir));
 
             parser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains("Content-Type=image/vnd.adobe.photoshop"));
+            assertTrue(Integer.parseInt(metadata.get(OCRParser.OCR_CHAR_COUNT)) >= 60);
             assertTrue(hts.contains("Parsing non-standard file format"));
             assertTrue(hts.contains("SAMPLE TEXT"));
             assertTrue(hts.contains("Centered Text"));
@@ -233,10 +226,9 @@ public class OCRParserTest {
             assumeTrue(isImageMagickInstalled(magickDir));
 
             parser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains("Content-Type=image/svg+xml"));
+            // assertTrue(Integer.parseInt(metadata.get(OCRParser.OCR_CHAR_COUNT)) >= 70);
             assertTrue(hts.contains("Transport"));
             assertTrue(hts.contains("Aa Ee Qq"));
             assertTrue(hts.contains("Rr Ss Tt"));
@@ -259,10 +251,15 @@ public class OCRParserTest {
     }
 
     private boolean isImageMagickInstalled(String magickDir) {
-        magickDir += osName.startsWith("windows") ? "/tools/imagemagick/magick" : "convert";
+        magickDir += osName.startsWith("windows") ? "/tools/imagemagick/magick" : "magick";
         try {
             Process process = Runtime.getRuntime().exec(magickDir + " -version");
             int result = process.waitFor();
+            // try again with older imagemagick command
+            if (result != 0 && osName.startsWith("linux")) {
+                process = Runtime.getRuntime().exec("convert -version");
+                result = process.waitFor();
+            }
             if (result != 0) {
                 throw new IOException("Returned error code " + result);
             }
@@ -272,4 +269,5 @@ public class OCRParserTest {
         }
         return true;
     }
+
 }
