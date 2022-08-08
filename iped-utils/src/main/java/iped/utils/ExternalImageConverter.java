@@ -257,17 +257,8 @@ public class ExternalImageConverter implements Closeable {
             logger.warn("", e);
         }
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-        String line = null;
-        try {
-            while((line = in.readLine()) != null) {
-              System.out.println(line);
-            }
-        } catch (IOException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        }
 
+        
         BufferedImage result = null;
         if (p != null) {
             Future<?> sendFuture = objIn instanceof InputStream ? sendInputStream((InputStream) objIn, p) : null;
