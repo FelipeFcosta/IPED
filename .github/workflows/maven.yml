@@ -40,10 +40,11 @@ jobs:
 
     - name: Compile imagemagick
       if: steps.imagemagick.outputs.cache-hit != 'true'
-      run: | 
+      run: |
+            sudo apt-get install gsfonts libpng-dev libtiff-dev librsvg2-dev
             git clone https://github.com/ImageMagick/ImageMagick.git ImageMagick-7.1.0
             cd ImageMagick-7.1.0/
-            sudo ./configure && sudo make
+            sudo ./configure --with-modules && sudo make
 
 
     - name: Install External Tools
